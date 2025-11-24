@@ -1,0 +1,118 @@
+<html>
+<head>
+<title>バクテリアの走化性</title>
+</head>
+<body bgcolor = "#AAFFAA">
+<table border = "1" bgcolor = "white">
+<tr>
+<td>
+<canvas id="bac" width="500" height="500">
+  <!--
+  canvas_id : bac
+  width     : 500
+  height    : 500
+  -->
+
+  <!-- Canvas非対応ブラウザの場合に表示 -->
+  Canvasに対応したブラウザを使ってください。
+</canvas>
+</td>
+</tr>
+</table>
+<h2>
+マウスをクリックするとそこに大腸菌が集まってきます。<BR>
+ダブルクリックすれば止まります。
+</h2>
+<script>
+var canvas;
+var ctx;
+var x = new Array(1000);
+var y = new Array(1000);
+var t = new Array(1000);
+var c = new Array(1000);
+var timer;
+var cx = 250;
+var cy = 250;
+var on = 0;
+
+window.onload = function() {
+    canvas = document.getElementById('bac');
+    if (!canvas || !canvas.getContext) return false;
+    ctx = canvas.getContext('2d');
+    for (i = 0; i < 1000; i++) {
+        x[i] = Math.random() * 500;
+        y[i] = Math.random() * 500;
+        t[i] = Math.random() * Math.PI * 2;
+        c[i] = conc(x[i], y[i]);
+        dx = Math.cos(t[i]) * 5;
+        dy = Math.sin(t[i]) * 5;
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "blue";
+        ctx.moveTo(x[i] - dx, y[i] - dy);
+        ctx.lineTo(x[i] + dx, y[i] + dy);
+        ctx.stroke();
+    }
+}
+
+var element = document.getElementById("bac");
+
+element.onmousedown = function(e) {
+    cx = e.clientX;
+    cy = e.clientY;
+    if (on == 0) {
+        timer = setInterval('draw()', 50);
+    }
+    on = 1;
+}
+
+element.ondblclick = function(e) {
+    on = 0;
+    clearInterval(timer);
+}    
+
+function draw() {
+    for (i = 0; i < 1000; i++) {
+        dx = Math.cos(t[i]) * 6;
+        dy = Math.sin(t[i]) * 6;
+        ctx.beginPath();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "white";
+        ctx.moveTo(x[i] - dx, y[i] - dy);
+        ctx.lineTo(x[i] + dx, y[i] + dy);
+        ctx.stroke();
+
+        c1 = conc(x[i], y[i]);
+        if (c1 > c[i] || Math.random() < 0.1) {
+            dx = Math.cos(t[i]) * 5;
+            dy = Math.sin(t[i]) * 5;
+            x[i] = x[i] + dx;
+            y[i] = y[i] + dy;
+        }
+        else {
+            dt = Math.random() * Math.PI / 2 - Math.PI / 4;
+            t[i] = t[i] + dt;
+        }
+        dx = Math.cos(t[i]) * 5;
+        dy = Math.sin(t[i]) * 5;
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "blue";
+        ctx.moveTo(x[i] - dx, y[i] - dy);
+        ctx.lineTo(x[i] + dx, y[i] + dy);
+        ctx.stroke();
+        c[i] = c1
+    }
+}
+
+function conc(a, b) {
+    dx = a - cx;
+    dy = b - cy;
+    d = dx * dx + dy * dy;
+    cc = Math.exp(-d/1000);
+    return cc;
+}
+
+</script>
+</body>
+</html>
