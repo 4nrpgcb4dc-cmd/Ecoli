@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>バクテリアの走化性</title>
+</head>
+<body bgcolor="#AAFFAA">
+<table border="1" bgcolor="white">
+<tr>
+<td>
+<canvas id="bac" width="500" height="500">
+  Canvasに対応したブラウザを使ってください。
+</canvas>
+</td>
+</tr>
+</table>
+
+<h2>
+マウスクリック／タップした場所に大腸菌が集まってきます。<br>
+下の「停止」ボタンで止まります。
+</h2>
+
+<button onclick="stopSim()">停止</button>
+
+<script>
+var canvas;
+var ctx;
+var x = new Array(1000);
+var y = new Array(1000);
+var t = new Array(1000);
+var c = new Array(1000);
+var timer = null;
+var cx = 250;
+var cy = 250;
+
+window.onload = function() {
+    canvas = document.getElementById('bac');
+    if (!canvas || !canvas.getContext) return;
+    ctx = canvas.getContext('2d');
+
+    // 初期描画
+    for (var i = 0; i < 1000; i++) {
+        x[i] = Math.random() * canvas.width;
+        y[i] = Math.random() * canvas.height;
+        t[i] = Math.random() * Math.PI * 2;
+        c[i] = conc(x[i], y[i]);
+
+        var dx = Math.cos(t[i]) * 5;
+        var dy = Math.sin(t[i]) * 5;
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "blue";
+        ctx.moveTo(x[i] - dx, y[i] - dy);
+        ctx.lineTo(x[i] + dx, y[i] + dy);
+        ctx.stroke();
+    }
+
+    // PC向け：クリック
+    canvas.addEventListener('click', function(e) {
+        var pos = getCanvasPos(e);
+        cx = pos.x;
+        cy = pos.y;
+        startSim();
+    }, false);
+
+    // スマホ／タブレット向け：タッチ
+    canvas.addEventListener('touchstart', function(e) {
+        e.preventDefault();  // スクロールなどを抑制
+        var pos = getCanvasPos(e);
+        cx = pos.x;
+        cy = pos.y;
+        startSim();
+    }, { passive: false });
+};
+
+// キャンバス座標に変換
+function getCanvasPos(e) {
+    var rect = canvas.getBoundingClientRect();
+    var clientX, clientY;
+
+    if (e.touches && e.touches[0]) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
+
+    return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+    };
+}
+
+// シミュレーション開始
+function startSim() {
+    if (timer !== null) return; // 既に動いていたら何もしない
+    timer = setInterval(draw, 50);
+}
+
+// 停止ボタン用
+function stopSim() {
+    if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+    }
+}
+
+function draw() {
+    for (var i = 0; i < 1000; i++) {
+        // 以前の位置を白で消す
+        var dx = Math.cos(t[i]) * 6;
+        var dy = Math.sin(t[i]) * 6;
+        ctx.beginPath();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "white";
+        ctx.moveTo(x[i] - dx, y[i] - dy);
+        ctx.lineTo(x[i] + dx, y[i] + dy);
+        ctx.stroke();
+
+        var c1 = conc(x[i], y[i]);
+
+        // 濃度が上がる方向なら前進、そうでなければ少し向きを変える
+        if (c1 > c[i] || Math.random() < 0.1) {
+            dx = Math.cos(t[i]) * 5;
+            dy = Math.sin(t[i]) * 5;
+            x[i] = x[i] + dx;
+            y[i] = y[i] + dy;
+        } else {
+            var dt = Math.random() * Math.PI / 2 - Math.PI / 4;
+            t[i] = t[i] + dt;
+        }
+
+        // 画面外に出たら中に戻す（簡易的な壁）
+        if (x[i] < 0) x[i] = 0;
+        if (x[i] > canvas.width) x[i] = canvas.width;
+        if (y[i] < 0) y[i] = 0;
+        if (y[i] > canvas.height) y[i] = canvas.height;
+
+        dx = Math.cos(t[i]) * 5;
+        dy = Math.sin(t[i]) * 5;
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "blue";
+        ctx.moveTo(x[i] - dx, y[i] - dy);
+        ctx.lineTo(x[i] + dx, y[i] + dy);
+        ctx.stroke();
+
+        c[i] = c1;
+    }
+}
+
+function conc(a, b) {
+    var dx = a - cx;
+    var dy = b - cy;
+    var d = dx * dx + dy * dy;
+    var cc = Math.exp(-d / 1000);
+    return cc;
+}
+</script>
+</body>
+</html>
